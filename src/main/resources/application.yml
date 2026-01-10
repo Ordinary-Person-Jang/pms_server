@@ -1,0 +1,41 @@
+server:
+  servlet:
+    session:
+      tracking-modes: cookie
+      timeout: 10000
+    context-path: '/pms'
+  port: 8080
+
+spring:
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pms_dev
+    username: pms_dev
+    password: pms_dev123
+    driver-class-name: org.postgresql.Driver
+  messages:
+    basename: errors
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        default_batch_fetch_size: 100
+
+        jdbc:
+          time_zone: UTC
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    #      org.hibernate.SQL: debug
+    root: info
+    org.hibernate.type : trace
+    org.springframework.security: trace
