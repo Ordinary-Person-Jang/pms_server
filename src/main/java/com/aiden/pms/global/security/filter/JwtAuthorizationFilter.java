@@ -2,6 +2,7 @@ package com.aiden.pms.global.security.filter;
 
 import com.aiden.pms.domain.common.constant.Constants;
 import com.aiden.pms.global.security.jwt.*;
+import com.aiden.pms.global.security.store.RedisTokenStore;
 import com.aiden.pms.web.form.security.LoginRequestForm;
 import com.aiden.pms.web.handler.exHandler.ErrorCode;
 import com.aiden.pms.web.handler.exHandler.ErrorResult;
@@ -28,6 +29,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -35,9 +37,10 @@ import java.util.Set;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService detailsService;
-    private final UsrRedisRepository redisRepository;
+    private final RedisTokenStore redisTokenStore;
     private final LoginService loginService;
     private final ObjectMapper mapper;
+    private final JwtTokenResolver jwtTokenResolver;
     private final JwtTokenProvider jwtTokenProvider;
 
     private static final Set<String> ADMIN_AUTHORITIES = Set.of(
@@ -48,13 +51,15 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String jwtHeader = request.getHeader(JwtConstants.HEADER_STRING);
+        Optional<String> tokenOpt = jwtTokenResolver.resolve(request);
 
-        if (jwtHeader == null || !jwtHeader.startsWith(JwtConstants.TOKEN_PREFIX)) {
+        if (tokenOpt.isEmpty()) {
             chain.doFilter(request, response);
             return;
         }
-        String token = request.getHeader(JwtConstants.HEADER_STRING).replace(JwtConstants.TOKEN_PREFIX, "");
+
+        String token = tokenOpt.get();
+
         JwtPayload jwtPayload;
 
         try {
@@ -64,10 +69,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        boolean byID = redisRepository.existsById(token);
+        boolean byID = redisTokenStore.exists(token);
         log.info("ById  [{}]", byID);
         if(byID) {
-            redisRepository.save(new RefreshToken(token, jwtPayload.loginId()));
+            redisTokenStore.extendTtl(token, jwtPayload.loginId());
             String loginInfoStr = jwtPayload.loginId() + "::" + jwtPayload.pjtId();
 
             PrincipalDetails principalDetails = (PrincipalDetails) detailsService.loadUserByUsername(loginInfoStr); // 여기서 유저 INFO를 부를것인가? (개선 필요)

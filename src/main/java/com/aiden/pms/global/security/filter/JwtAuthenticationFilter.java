@@ -1,6 +1,7 @@
 package com.aiden.pms.global.security.filter;
 
 import com.aiden.pms.global.security.jwt.*;
+import com.aiden.pms.global.security.store.RedisTokenStore;
 import com.aiden.pms.web.form.security.LoginRequestForm;
 import com.aiden.pms.web.handler.exHandler.ErrorResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +27,7 @@ import java.util.Date;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    private final UsrRedisRepository redisRepository;
+    private final RedisTokenStore redisTokenStore;
     private final ObjectMapper mapper;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -63,7 +64,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.addHeader(JwtConstants.HEADER_STRING, JwtConstants.TOKEN_PREFIX + jwtToken);
 
         RefreshToken redisToken = new RefreshToken(jwtToken, usr.getUsrId());
-        redisRepository.save(redisToken);
+        redisTokenStore.register(redisToken);
 
         chain.doFilter(request, response);
     }

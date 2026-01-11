@@ -18,7 +18,7 @@ public class LoginApiController {
     }
 
     @Data
-    class LoginMsg{
+    private static class LoginMsg{
         private String id;
         private int code;
 

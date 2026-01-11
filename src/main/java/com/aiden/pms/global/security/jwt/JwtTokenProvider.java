@@ -6,6 +6,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Component
@@ -14,10 +15,12 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
 
     public String createAccessToken(JwtPayload payload) {
+        Instant expireTime = Instant.now().plus(jwtProperties.getExpirationTime());
+
         return JWT.create()
                 .withSubject(payload.loginId())
                 .withClaim(JwtClaims.PJT_ID.key(), payload.pjtId())
-                .withExpiresAt(new Date(System.currentTimeMillis() + jwtProperties.getExpirationTime()))
+                .withExpiresAt(expireTime)
                 .sign(Algorithm.HMAC512(jwtProperties.getSecret()));
     }
 

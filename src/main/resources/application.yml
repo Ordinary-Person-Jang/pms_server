@@ -43,4 +43,4 @@ logging:
 
 jwt:
   secret: PMS_DEV
-  expiration-time: 60000 * 30
+  expiration-time: 30m

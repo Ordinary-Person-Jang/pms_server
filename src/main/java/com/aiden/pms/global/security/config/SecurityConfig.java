@@ -5,6 +5,8 @@ import com.aiden.pms.global.security.filter.JwtAuthenticationFilter;
 import com.aiden.pms.global.security.filter.JwtAuthorizationFilter;
 import com.aiden.pms.global.security.jwt.JwtProperties;
 import com.aiden.pms.global.security.jwt.JwtTokenProvider;
+import com.aiden.pms.global.security.jwt.JwtTokenResolver;
+import com.aiden.pms.global.security.store.RedisTokenStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aiden.pms.global.security.handler.JwtAccessDeniedHandler;
 import com.aiden.pms.global.security.repository.UsrRedisRepository;
@@ -58,19 +60,19 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager, UsrRedisRepository redisRepository,
+    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager, RedisTokenStore redisTokenStore,
                                                            ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider){
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(redisRepository, objectMapper, jwtTokenProvider);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(redisTokenStore, objectMapper, jwtTokenProvider);
         filter.setAuthenticationManager(authenticationManager);
 
         return filter;
     }
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter(UserDetailsService detailsService, UsrRedisRepository redisRepository,
-                                                         LoginService loginService, ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider){
+    public JwtAuthorizationFilter jwtAuthorizationFilter(UserDetailsService detailsService, RedisTokenStore redisTokenStore, LoginService loginService,
+                                                         ObjectMapper objectMapper, JwtTokenResolver jwtTokenResolver, JwtTokenProvider jwtTokenProvider){
 
-        return new JwtAuthorizationFilter(detailsService, redisRepository, loginService, objectMapper, jwtTokenProvider);
+        return new JwtAuthorizationFilter(detailsService, redisTokenStore, loginService, objectMapper, jwtTokenResolver, jwtTokenProvider);
     }
 
 

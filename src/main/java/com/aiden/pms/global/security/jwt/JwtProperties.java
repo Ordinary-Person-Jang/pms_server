@@ -4,6 +4,8 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 @Component
 @Getter
 public class JwtProperties {
@@ -12,6 +14,6 @@ public class JwtProperties {
     private String Secret;
 
     @Value("${jwt.expiration-time}")
-    private int expirationTime;
+    private Duration expirationTime;
 
 }
