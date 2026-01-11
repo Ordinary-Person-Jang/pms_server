@@ -31,10 +31,10 @@ public class LoginUsrInfoDto {
 
     private List<LoginUsrAuthDto> Role;
 
-    private String suYn;
+    private String isAdmin;
 
-    public void setSuYn(String suYn) {
-        this.suYn = suYn;
+    public void setIsAdmin(String isAdmin) {
+        this.isAdmin = isAdmin;
     }
 
     public void setRole(List<LoginUsrAuthDto> role) {

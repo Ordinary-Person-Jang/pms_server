@@ -33,9 +33,14 @@ spring:
       host: localhost
       port: 6379
 
+
 logging:
   level:
     #      org.hibernate.SQL: debug
     root: info
     org.hibernate.type : trace
     org.springframework.security: trace
+
+jwt:
+  secret: PMS_DEV
+  expiration-time: 60000 * 30

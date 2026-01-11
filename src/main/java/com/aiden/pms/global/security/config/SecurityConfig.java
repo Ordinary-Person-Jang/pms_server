@@ -1,10 +1,12 @@
-package com.aiden.pms.global.config;
+package com.aiden.pms.global.security.config;
 
 
-import com.aiden.pms.global.filter.security.JwtAuthenticationFilter;
-import com.aiden.pms.global.filter.security.JwtAuthorizationFilter;
+import com.aiden.pms.global.security.filter.JwtAuthenticationFilter;
+import com.aiden.pms.global.security.filter.JwtAuthorizationFilter;
+import com.aiden.pms.global.security.jwt.JwtProperties;
+import com.aiden.pms.global.security.jwt.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.aiden.pms.global.filter.security.JwtAccessDeniedHandler;
+import com.aiden.pms.global.security.handler.JwtAccessDeniedHandler;
 import com.aiden.pms.global.security.repository.UsrRedisRepository;
 import com.aiden.pms.global.security.service.LoginService;
 import lombok.RequiredArgsConstructor;
@@ -56,8 +58,9 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager , UsrRedisRepository redisRepository, ObjectMapper objectMapper){
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(redisRepository, objectMapper);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager, UsrRedisRepository redisRepository,
+                                                           ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider){
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(redisRepository, objectMapper, jwtTokenProvider);
         filter.setAuthenticationManager(authenticationManager);
 
         return filter;
@@ -65,9 +68,9 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter(UserDetailsService detailsService, UsrRedisRepository redisRepository,
-                                                         LoginService loginService, ObjectMapper objectMapper){
+                                                         LoginService loginService, ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider){
 
-        return new JwtAuthorizationFilter(detailsService, redisRepository, loginService, objectMapper);
+        return new JwtAuthorizationFilter(detailsService, redisRepository, loginService, objectMapper, jwtTokenProvider);
     }
 
 

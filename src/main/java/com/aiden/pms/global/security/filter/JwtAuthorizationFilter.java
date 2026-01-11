@@ -1,6 +1,7 @@
-package com.aiden.pms.global.filter.security;
+package com.aiden.pms.global.security.filter;
 
 import com.aiden.pms.domain.common.constant.Constants;
+import com.aiden.pms.global.security.jwt.*;
 import com.aiden.pms.web.form.security.LoginRequestForm;
 import com.aiden.pms.web.handler.exHandler.ErrorCode;
 import com.aiden.pms.web.handler.exHandler.ErrorResult;
@@ -27,6 +28,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,28 +38,27 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final UsrRedisRepository redisRepository;
     private final LoginService loginService;
     private final ObjectMapper mapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
-
+    private static final Set<String> ADMIN_AUTHORITIES = Set.of(
+            Constants.ADMIN_AUTH,
+            Role.PM.name(),
+            Role.QAM.name()
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
+        String jwtHeader = request.getHeader(JwtConstants.HEADER_STRING);
 
-        if (jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
+        if (jwtHeader == null || !jwtHeader.startsWith(JwtConstants.TOKEN_PREFIX)) {
             chain.doFilter(request, response);
             return;
         }
-        String token = request.getHeader(JwtProperties.HEADER_STRING).replace(JwtProperties.TOKEN_PREFIX, "");
-        String pjtId = null;
-        String loginId = null;
+        String token = request.getHeader(JwtConstants.HEADER_STRING).replace(JwtConstants.TOKEN_PREFIX, "");
+        JwtPayload jwtPayload;
 
         try {
-            var decoded = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET))
-                    .build()
-                    .verify(token);
-
-            pjtId = decoded.getClaim("pjtID").asString();
-            loginId = decoded.getClaim("loginID").asString();
+            jwtPayload = jwtTokenProvider.parse(token);
         } catch (Exception e) {
             exceptionHandler(response, ErrorCode.Expried_Token);
             return;
@@ -66,24 +67,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         boolean byID = redisRepository.existsById(token);
         log.info("ById  [{}]", byID);
         if(byID) {
-            redisRepository.save(new RefreshToken(token, loginId));
-            String loginInfoStr = loginId + "::" + pjtId;
+            redisRepository.save(new RefreshToken(token, jwtPayload.loginId()));
+            String loginInfoStr = jwtPayload.loginId() + "::" + jwtPayload.pjtId();
 
             PrincipalDetails principalDetails = (PrincipalDetails) detailsService.loadUserByUsername(loginInfoStr); // 여기서 유저 INFO를 부를것인가? (개선 필요)
-            principalDetails.getUsr().setRole(loginService.setLoginUsrAuth(new LoginRequestForm(loginId, pjtId)));
+            principalDetails.getUsr().setRole(loginService.setLoginUsrAuth(new LoginRequestForm(jwtPayload.loginId(), jwtPayload.pjtId())));
 
-            String suYn="N";
             List<LoginUsrAuthDto> roles = principalDetails.getUsr().getRole();
-            for(LoginUsrAuthDto role : roles){
 //                log.info("롤  : " + role.getAuthority());
-                //관리자 롤이 있는 경우
-                if(Constants.ADMIN_AUTH.equals(role.getAuthority())
-                        || Role.PM.name().equals(role.getAuthority())
-                        || Role.QAM.name().equals(role.getAuthority())){
-                    suYn="Y";
-                }
-            }
-            principalDetails.getUsr().setSuYn(suYn);
+            //관리자 롤이 있는 경우
+            boolean isAdmin = roles.stream()
+                    .map(LoginUsrAuthDto::getAuthority)
+                    .anyMatch(ADMIN_AUTHORITIES::contains);
+
+            principalDetails.getUsr().setIsAdmin(isAdmin ? "Y" : "N");
 
             UsernamePasswordAuthenticationToken logintoken =
                     new UsernamePasswordAuthenticationToken(principalDetails, "" ,principalDetails.getAuthorities());
@@ -101,7 +98,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             exceptionHandler(response, ErrorCode.No_Exist_Token);
             return;
         }
-        log.info("[{}] [{}] [{}]",token, loginId, byID);
+        log.info("[{}] [{}] [{}]",token, jwtPayload.loginId(), byID);
 
     }
 

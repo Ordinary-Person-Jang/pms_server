@@ -1,4 +1,4 @@
-package com.aiden.pms.global.filter.security;
+package com.aiden.pms.global.security.handler;
 
 import com.aiden.pms.web.handler.exHandler.ErrorResult;
 import com.fasterxml.jackson.databind.ObjectMapper;

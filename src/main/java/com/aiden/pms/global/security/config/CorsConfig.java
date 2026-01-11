@@ -1,4 +1,4 @@
-package com.aiden.pms.global.config;
+package com.aiden.pms.global.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

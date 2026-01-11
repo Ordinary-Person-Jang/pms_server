@@ -1,9 +1,8 @@
-package com.aiden.pms.global.filter.security;
+package com.aiden.pms.global.security.filter;
 
+import com.aiden.pms.global.security.jwt.*;
 import com.aiden.pms.web.form.security.LoginRequestForm;
 import com.aiden.pms.web.handler.exHandler.ErrorResult;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aiden.pms.global.security.dto.LoginUsrInfoDto;
 import com.aiden.pms.global.security.entity.PrincipalDetails;
@@ -29,6 +28,7 @@ import java.util.Date;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final UsrRedisRepository redisRepository;
     private final ObjectMapper mapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @SneakyThrows
     @Override
@@ -57,15 +57,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         PrincipalDetails principal = (PrincipalDetails) authResult.getPrincipal();
         LoginUsrInfoDto usr = principal.getUsr();
-        String jwtToken = JWT.create()
-                .withSubject("PMS_DEV")
-                .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))
-                .withClaim("pjtID", usr.getPjtId())
-                .withClaim("loginID", usr.getUsrId())
-                .sign(Algorithm.HMAC512(JwtProperties.SECRET));
+        String jwtToken = jwtTokenProvider.createAccessToken(new JwtPayload(usr.getUsrId(), usr.getPjtId()));
 
         request.setAttribute("principal", principal);
-        response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+        response.addHeader(JwtConstants.HEADER_STRING, JwtConstants.TOKEN_PREFIX + jwtToken);
 
         RefreshToken redisToken = new RefreshToken(jwtToken, usr.getUsrId());
         redisRepository.save(redisToken);

@@ -6,11 +6,12 @@ import lombok.Getter;
 @Getter
 public class LoginUsrAuthDto {
     private String usrId;
-    private String Authority;
+    private String authority;
 
     @QueryProjection
     public LoginUsrAuthDto(String usrId, String authority) {
         this.usrId = usrId;
-        this.Authority = authority;
+        this.authority = authority;
     }
+
 }
