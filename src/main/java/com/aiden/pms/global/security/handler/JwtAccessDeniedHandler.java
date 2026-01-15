@@ -23,7 +23,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         response.setCharacterEncoding("UTF-8");
 
         ObjectMapper mapper = new ObjectMapper();
-        ErrorResult errorResult = new ErrorResult("403", "접근권한이 없습니다.");
+        ErrorResult errorResult = new ErrorResult("AUTH_EXPIRED", "접근권한이 없습니다.");
         String json = mapper.writeValueAsString(errorResult);
         response.getWriter().write(json);
     }

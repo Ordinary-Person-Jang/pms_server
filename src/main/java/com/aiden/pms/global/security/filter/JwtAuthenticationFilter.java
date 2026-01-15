@@ -75,7 +75,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         try {
-            ErrorResult errorResult = new ErrorResult("401", "아이디 또는 비밀번호를 확인해 주세요");
+            ErrorResult errorResult = new ErrorResult("INVALID_CREDENTIALS", "아이디 또는 비밀번호를 확인해 주세요");
             String json = mapper.writeValueAsString(errorResult);
             response.getWriter().write(json);
         } catch (Exception e) {
